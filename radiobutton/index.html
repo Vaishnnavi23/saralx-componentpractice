@@ -5,123 +5,85 @@
 <title>Accessible ARIA Radio Group</title>
 
 <style>
+  /* Radiogroup container */
   [role="radiogroup"] {
-    padding: 0;
     margin-bottom: 1.5rem;
-    list-style: none;
   }
 
-  [role="radiogroup"]:focus {
-    outline: none;
+  /* Group heading */
+  .group-heading {
+    margin-bottom: 1rem;
   }
 
-  [role="radio"] {
-    padding: 4px 8px;
-    border-radius: 5px;
-    display: inline-flex;
+  /* Radio container */
+  .radio {
+    display: flex;
     align-items: center;
+    gap: 10px;
+    width: 200px;
+    padding: 6px 8px;
+    margin-bottom: 0.75rem;
     cursor: pointer;
+    border-radius: 5px;
     outline: none;
-    color: #000;
   }
 
-  [role="radio"] + [role="radio"] {
-    margin-left: 1em;
-  }
-
-
-  [role="radio"]::before {
-    content: "";
-    width: 14px;
-    height: 14px;
+  /* Visual radio circle (decorative only) */
+  .radio-ui {
+    width: 16px;
+    height: 16px;
+    min-width: 16px;
     border: 2px solid #005a9c;
     border-radius: 50%;
-    margin-right: 6px;
+    box-sizing: border-box;
+    flex-shrink: 0;
   }
 
-
-  [role="radio"][aria-checked="true"]::before {
+  /* Checked state */
+  .radio[aria-checked="true"] .radio-ui {
     background-color: #005a9c;
-    box-shadow: inset 0 0 0 3px #fff;
+    box-shadow: inset 0 0 0 4px #ffffff;
   }
 
-
-  [role="radio"]:focus,
-  [role="radio"]:hover {
+  /* Focus and hover */
+  .radio:focus,
+  .radio:hover {
     outline: 2px solid #005a9c;
     outline-offset: 2px;
-    background-color: #def;
+    background-color: #ffffff;
   }
-  
-.group-heading {
-  margin-bottom: 1rem;
-}
 
-
-[role="radio"] {
-width: 200px;
-  display: flex;
-  align-items: center;      
-  gap: 8px;                 
-  cursor: pointer;
-  margin-bottom: 0.75rem;
-  line-height: normal;
-}
-
-
-[role="radio"]::before {
-  content: "";
-  width: 16px;
-  height: 16px;
-  min-width: 16px;         
-  min-height: 16px;
-  border: 2px solid #005a9c;
-  border-radius: 50%;
-  box-sizing: border-box;
-  flex-shrink: 0;          
-}
-
-
-[role="radio"][aria-checked="true"]::before {
-  background-color: #005a9c;
-  box-shadow: inset 0 0 0 4px #fff;
-}
-
-
-[role="radio"]:focus,
-[role="radio"]:hover {
-  outline: 2px solid #005a9c;
-  outline-offset: 2px;
-  background-color: #ffffff;
-}
-
-[role="radio"] {
-  margin-left: 0;
-  padding-left: 0;
-}
-
-
-[role="radio"] + [role="radio"] {
-  margin-left: 0;
-}
-
-
-
+  /* Label text */
+  .radio-label {
+    line-height: normal;
+  }
 </style>
 </head>
 
 <body>
 
 <div role="radiogroup" aria-labelledby="group_label">
-  <h1 id="group_label"  class="group-heading" >WCAG Compliance Level</h1>
-	
-  <div role="radio" aria-checked="true" tabindex="0">WCAG A</div>
-  <div role="radio" aria-checked="false" tabindex="-1">WCAG AA</div>
-  <div role="radio" aria-checked="false" tabindex="-1">WCAG AAA</div>
+  <h1 id="group_label" class="group-heading">
+    WCAG Compliance Level
+  </h1>
+
+  <div role="radio" aria-checked="true" tabindex="0" class="radio">
+    <span class="radio-ui" aria-hidden="true"></span>
+    <span class="radio-label">WCAG A</span>
+  </div>
+
+  <div role="radio" aria-checked="false" tabindex="-1" class="radio">
+    <span class="radio-ui" aria-hidden="true"></span>
+    <span class="radio-label">WCAG AA</span>
+  </div>
+
+  <div role="radio" aria-checked="false" tabindex="-1" class="radio">
+    <span class="radio-ui" aria-hidden="true"></span>
+    <span class="radio-label">WCAG AAA</span>
+  </div>
 </div>
 
-<div> Thanks for learning</div>
-
+<div>Thanks for learning</div>
 
 <script>
 'use strict';
@@ -132,9 +94,6 @@ class RadioGroup {
       groupNode.querySelectorAll('[role="radio"]')
     );
 
-    this.firstRadioButton = this.radioButtons[0];
-    this.lastRadioButton = this.radioButtons[this.radioButtons.length - 1];
-
     this.radioButtons.forEach(rb => {
       rb.addEventListener('keydown', this.handleKeydown.bind(this));
       rb.addEventListener('click', this.handleClick.bind(this));
@@ -144,44 +103,48 @@ class RadioGroup {
   setChecked(current) {
     this.radioButtons.forEach(rb => {
       rb.setAttribute('aria-checked', 'false');
-      rb.tabIndex = -1;
     });
 
     current.setAttribute('aria-checked', 'true');
-    current.tabIndex = 0;
-    current.focus();
+  }
+
+  moveFocus(currentIndex, direction) {
+    let nextIndex =
+      direction === 'next'
+        ? (currentIndex + 1) % this.radioButtons.length
+        : (currentIndex - 1 + this.radioButtons.length) %
+          this.radioButtons.length;
+
+    this.radioButtons.forEach(rb => (rb.tabIndex = -1));
+    this.radioButtons[nextIndex].tabIndex = 0;
+    this.radioButtons[nextIndex].focus();
   }
 
   handleKeydown(event) {
-    let index = this.radioButtons.indexOf(event.currentTarget);
+    const index = this.radioButtons.indexOf(event.currentTarget);
 
     switch (event.key) {
-      case ' ':
-      case 'Enter':
-        this.setChecked(event.currentTarget);
-        break;
-
       case 'ArrowRight':
       case 'ArrowDown':
-        this.setChecked(
-          this.radioButtons[(index + 1) % this.radioButtons.length]
-        );
+        this.moveFocus(index, 'next');
+        event.preventDefault();
         break;
 
       case 'ArrowLeft':
       case 'ArrowUp':
-        this.setChecked(
-          this.radioButtons[
-            (index - 1 + this.radioButtons.length) % this.radioButtons.length
-          ]
-        );
+        this.moveFocus(index, 'prev');
+        event.preventDefault();
+        break;
+
+      case ' ':
+      case 'Enter':
+        this.setChecked(event.currentTarget);
+        event.preventDefault();
         break;
 
       default:
         return;
     }
-
-    event.preventDefault();
   }
 
   handleClick(event) {
@@ -195,6 +158,7 @@ window.addEventListener('load', () => {
     .forEach(group => new RadioGroup(group));
 });
 </script>
+
 
 </body>
 </html>
