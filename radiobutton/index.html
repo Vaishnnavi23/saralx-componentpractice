@@ -1,104 +1,23 @@
-		<!DOCTYPE html>
-		<html lang="en">
-		<head>
-		<meta charset="UTF-8">
-		<title>Accessible ARIA Radio Group</title>
-
-		<style>
-		  /* Radiogroup container */
-		  [role="radiogroup"] {
-			margin-bottom: 1.5rem;
-		  }
-
-		  /* Group heading */
-		  .group-heading {
-			margin-bottom: 1rem;
-		  }
-
-		  /* Radio container */
-		  .radio {
-			display: flex;
-			align-items: center;
-			gap: 10px;
-			width: 200px;
-			padding: 6px 8px;
-			margin-bottom: 0.75rem;
-			cursor: pointer;
-			border-radius: 5px;
-			outline: none;
-		  }
-
-		  /* Visual radio circle (decorative only) */
-		  .radio-ui {
-			width: 16px;
-			height: 16px;
-			min-width: 16px;
-			border: 2px solid #005a9c;
-			border-radius: 50%;
-			box-sizing: border-box;
-			flex-shrink: 0;
-		  }
-
-		  /* Checked state */
-		  .radio[aria-checked="true"] .radio-ui {
-			background-color: #005a9c;
-			box-shadow: inset 0 0 0 4px #ffffff;
-		  }
-
-		  /* Focus and hover */
-		  .radio:focus,
-		  .radio:hover {
-			outline: 2px solid #005a9c;
-			outline-offset: 2px;
-			background-color: #ffffff;
-		  }
-
-		  /* Label text */
-		  .radio-label {
-			line-height: normal;
-		  }
-		</style>
-		</head>
-
-		<body>
-
-		<div role="radiogroup" aria-labelledby="group_label">
-		  <h1 id="group_label" class="group-heading">
-			WCAG Compliance Level
-		  </h1>
-
-		  <div role="radio" aria-checked="true" tabindex="0" class="radio">
-			<span class="radio-ui" aria-hidden="true"></span>
-			<span class="radio-label">WCAG A</span>
-		  </div>
-
-		  <div role="radio" aria-checked="false" tabindex="-1" class="radio">
-			<span class="radio-ui" aria-hidden="true"></span>
-			<span class="radio-label">WCAG AA</span>
-		  </div>
-
-		  <div role="radio" aria-checked="false" tabindex="-1" class="radio">
-			<span class="radio-ui" aria-hidden="true"></span>
-			<span class="radio-label">WCAG AAA</span>
-		  </div>
-		</div>
-
-		<p>Thanks for learning</p>
-
-		<script>
+<script>
 'use strict';
 
 class RadioGroup {
   constructor(groupNode) {
+    this.groupNode = groupNode;
     this.radioButtons = Array.from(
       groupNode.querySelectorAll('[role="radio"]')
     );
 
     this.radioButtons.forEach(rb => {
-      rb.addEventListener('keydown', this.handleKeydown.bind(this));
-      rb.addEventListener('click', this.handleClick.bind(this));
-      rb.addEventListener('blur', this.handleBlur.bind(this));
+      rb.addEventListener('keydown', this.onKeyDown.bind(this));
+      rb.addEventListener('click', this.onClick.bind(this));
     });
+
+    // Critical: detect when focus leaves the group
+    this.groupNode.addEventListener(
+      'focusout',
+      this.onGroupFocusOut.bind(this)
+    );
   }
 
   setChecked(current) {
@@ -111,17 +30,17 @@ class RadioGroup {
     current.tabIndex = 0;
   }
 
-  moveFocus(currentIndex, direction) {
+  moveFocus(fromIndex, direction) {
     const nextIndex =
       direction === 'next'
-        ? (currentIndex + 1) % this.radioButtons.length
-        : (currentIndex - 1 + this.radioButtons.length) %
+        ? (fromIndex + 1) % this.radioButtons.length
+        : (fromIndex - 1 + this.radioButtons.length) %
           this.radioButtons.length;
 
     this.radioButtons[nextIndex].focus();
   }
 
-  handleKeydown(event) {
+  onKeyDown(event) {
     const index = this.radioButtons.indexOf(event.currentTarget);
 
     switch (event.key) {
@@ -142,23 +61,23 @@ class RadioGroup {
         this.setChecked(event.currentTarget);
         event.preventDefault();
         break;
-
-      default:
-        return;
     }
   }
 
-  handleClick(event) {
+  onClick(event) {
     this.setChecked(event.currentTarget);
   }
 
-  handleBlur() {
-    // Ensure only the checked radio remains tabbable
-    this.radioButtons.forEach(rb => {
-      if (rb.getAttribute('aria-checked') !== 'true') {
-        rb.tabIndex = -1;
-      }
-    });
+  onGroupFocusOut(event) {
+    // If focus is moving OUT of the group
+    if (!this.groupNode.contains(event.relatedTarget)) {
+      // Remove focusability from all radios except checked
+      this.radioButtons.forEach(rb => {
+        if (rb.getAttribute('aria-checked') !== 'true') {
+          rb.tabIndex = -1;
+        }
+      });
+    }
   }
 }
 
@@ -168,8 +87,3 @@ window.addEventListener('load', () => {
     .forEach(group => new RadioGroup(group));
 });
 </script>
-
-
-
-		</body>
-		</html>
