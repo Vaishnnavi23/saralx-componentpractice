@@ -2,127 +2,107 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Accessible ARIA Radio Group</title>
+<title>ARIA Radio Group Example</title>
 <style>
   [role="radiogroup"] {
-    margin-bottom: 1.5rem;
-  }
-
-  .group-heading {
-    margin-bottom: 1rem;
+    margin: 1rem 0;
   }
 
   .radio {
     display: flex;
     align-items: center;
-    gap: 10px;
-    width: 200px;
+    gap: 8px;
     padding: 6px 8px;
-    margin-bottom: 0.75rem;
+    margin-bottom: 0.5rem;
     cursor: pointer;
-    border-radius: 5px;
+    border-radius: 4px;
     outline: none;
   }
 
   .radio-ui {
     width: 16px;
     height: 16px;
-    min-width: 16px;
     border: 2px solid #005a9c;
     border-radius: 50%;
     box-sizing: border-box;
-    flex-shrink: 0;
   }
 
   .radio[aria-checked="true"] .radio-ui {
     background-color: #005a9c;
-    box-shadow: inset 0 0 0 4px #ffffff;
+    box-shadow: inset 0 0 0 4px #fff;
   }
 
   .radio:focus {
     outline: 2px solid #005a9c;
     outline-offset: 2px;
-    background-color: #ffffff;
-  }
-
-  .radio-label {
-    line-height: normal;
   }
 </style>
 </head>
 <body>
-
+<h1>ARIA Radio Group Example</h1>
 <div role="radiogroup" aria-labelledby="group_label">
-  <h1 id="group_label" class="group-heading">WCAG Compliance Level</h1>
+  <h2 id="group_label">Choose a Level</h2>
 
   <div role="radio" aria-checked="true" tabindex="0" class="radio">
     <span class="radio-ui" aria-hidden="true"></span>
-    <span class="radio-label">WCAG A</span>
+    <span>Option A</span>
   </div>
 
   <div role="radio" aria-checked="false" tabindex="-1" class="radio">
     <span class="radio-ui" aria-hidden="true"></span>
-    <span class="radio-label">WCAG AA</span>
+    <span>Option B</span>
   </div>
 
   <div role="radio" aria-checked="false" tabindex="-1" class="radio">
     <span class="radio-ui" aria-hidden="true"></span>
-    <span class="radio-label">WCAG AAA</span>
+    <span>Option C</span>
   </div>
 </div>
-
-<p>Thanks for learning</p>
 
 <script>
 'use strict';
 
 class RadioGroup {
   constructor(groupNode) {
-    this.groupNode = groupNode;
-    this.radioButtons = Array.from(groupNode.querySelectorAll('[role="radio"]'));
+    this.radios = Array.from(groupNode.querySelectorAll('[role="radio"]'));
 
-    this.radioButtons.forEach(rb => {
-      rb.addEventListener('keydown', this.onKeyDown.bind(this));
-      rb.addEventListener('click', this.onClick.bind(this));
+    this.radios.forEach(rb => {
+      rb.addEventListener('keydown', e => this.onKeyDown(e));
+      rb.addEventListener('click', e => this.onClick(e));
     });
   }
 
   setChecked(current) {
-    this.radioButtons.forEach(rb => {
+    this.radios.forEach(rb => {
       rb.setAttribute('aria-checked', 'false');
       rb.tabIndex = -1;
     });
-
     current.setAttribute('aria-checked', 'true');
     current.tabIndex = 0;
     current.focus();
   }
 
-  moveFocus(fromIndex, direction) {
-    const nextIndex =
-      direction === 'next'
-        ? (fromIndex + 1) % this.radioButtons.length
-        : (fromIndex - 1 + this.radioButtons.length) % this.radioButtons.length;
-
-    this.radioButtons[nextIndex].focus();
+  moveFocus(index, direction) {
+    const len = this.radios.length;
+    const nextIndex = direction === 'next'
+      ? (index + 1) % len
+      : (index - 1 + len) % len;
+    this.radios[nextIndex].focus();
   }
 
   onKeyDown(event) {
-    const index = this.radioButtons.indexOf(event.currentTarget);
-
+    const index = this.radios.indexOf(event.currentTarget);
     switch (event.key) {
       case 'ArrowRight':
       case 'ArrowDown':
         this.moveFocus(index, 'next');
         event.preventDefault();
         break;
-
       case 'ArrowLeft':
       case 'ArrowUp':
         this.moveFocus(index, 'prev');
         event.preventDefault();
         break;
-
       case ' ':
       case 'Enter':
         this.setChecked(event.currentTarget);
@@ -136,7 +116,7 @@ class RadioGroup {
   }
 }
 
-window.addEventListener('load', () => {
+window.addEventListener('DOMContentLoaded', () => {
   document.querySelectorAll('[role="radiogroup"]').forEach(group => new RadioGroup(group));
 });
 </script>
