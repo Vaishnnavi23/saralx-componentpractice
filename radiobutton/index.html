@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Accessible ARIA Radio Group</title>
+
+<style>
+  [role="radiogroup"] {
+    padding: 0;
+    margin-bottom: 1.5rem;
+    list-style: none;
+  }
+
+  [role="radiogroup"]:focus {
+    outline: none;
+  }
+
+  [role="radio"] {
+    padding: 4px 8px;
+    border-radius: 5px;
+    display: inline-flex;
+    align-items: center;
+    cursor: pointer;
+    outline: none;
+    color: #000;
+  }
+
+  [role="radio"] + [role="radio"] {
+    margin-left: 1em;
+  }
+
+
+  [role="radio"]::before {
+    content: "";
+    width: 14px;
+    height: 14px;
+    border: 2px solid #005a9c;
+    border-radius: 50%;
+    margin-right: 6px;
+  }
+
+
+  [role="radio"][aria-checked="true"]::before {
+    background-color: #005a9c;
+    box-shadow: inset 0 0 0 3px #fff;
+  }
+
+
+  [role="radio"]:focus,
+  [role="radio"]:hover {
+    outline: 2px solid #005a9c;
+    outline-offset: 2px;
+    background-color: #def;
+  }
+  
+.group-heading {
+  margin-bottom: 1rem;
+}
+
+
+[role="radio"] {
+width: 200px;
+  display: flex;
+  align-items: center;      
+  gap: 8px;                 
+  cursor: pointer;
+  margin-bottom: 0.75rem;
+  line-height: normal;
+}
+
+
+[role="radio"]::before {
+  content: "";
+  width: 16px;
+  height: 16px;
+  min-width: 16px;         
+  min-height: 16px;
+  border: 2px solid #005a9c;
+  border-radius: 50%;
+  box-sizing: border-box;
+  flex-shrink: 0;          
+}
+
+
+[role="radio"][aria-checked="true"]::before {
+  background-color: #005a9c;
+  box-shadow: inset 0 0 0 4px #fff;
+}
+
+
+[role="radio"]:focus,
+[role="radio"]:hover {
+  outline: 2px solid #005a9c;
+  outline-offset: 2px;
+  background-color: #ffffff;
+}
+
+[role="radio"] {
+  margin-left: 0;
+  padding-left: 0;
+}
+
+
+[role="radio"] + [role="radio"] {
+  margin-left: 0;
+}
+
+
+
+</style>
+</head>
+
+<body>
+
+<div role="radiogroup" aria-labelledby="group_label">
+  <h1 id="group_label"  class="group-heading" >WCAG Compliance Level</h1>
+	
+  <div role="radio" aria-checked="true" tabindex="0">WCAG A</div>
+  <div role="radio" aria-checked="false" tabindex="-1">WCAG AA</div>
+  <div role="radio" aria-checked="false" tabindex="-1">WCAG AAA</div>
+</div>
+
+<div> Thanks for learning</div>
+
+
+<script>
+'use strict';
+
+class RadioGroup {
+  constructor(groupNode) {
+    this.radioButtons = Array.from(
+      groupNode.querySelectorAll('[role="radio"]')
+    );
+
+    this.firstRadioButton = this.radioButtons[0];
+    this.lastRadioButton = this.radioButtons[this.radioButtons.length - 1];
+
+    this.radioButtons.forEach(rb => {
+      rb.addEventListener('keydown', this.handleKeydown.bind(this));
+      rb.addEventListener('click', this.handleClick.bind(this));
+    });
+  }
+
+  setChecked(current) {
+    this.radioButtons.forEach(rb => {
+      rb.setAttribute('aria-checked', 'false');
+      rb.tabIndex = -1;
+    });
+
+    current.setAttribute('aria-checked', 'true');
+    current.tabIndex = 0;
+    current.focus();
+  }
+
+  handleKeydown(event) {
+    let index = this.radioButtons.indexOf(event.currentTarget);
+
+    switch (event.key) {
+      case ' ':
+      case 'Enter':
+        this.setChecked(event.currentTarget);
+        break;
+
+      case 'ArrowRight':
+      case 'ArrowDown':
+        this.setChecked(
+          this.radioButtons[(index + 1) % this.radioButtons.length]
+        );
+        break;
+
+      case 'ArrowLeft':
+      case 'ArrowUp':
+        this.setChecked(
+          this.radioButtons[
+            (index - 1 + this.radioButtons.length) % this.radioButtons.length
+          ]
+        );
+        break;
+
+      default:
+        return;
+    }
+
+    event.preventDefault();
+  }
+
+  handleClick(event) {
+    this.setChecked(event.currentTarget);
+  }
+}
+
+window.addEventListener('load', () => {
+  document
+    .querySelectorAll('[role="radiogroup"]')
+    .forEach(group => new RadioGroup(group));
+});
+</script>
+
+</body>
+</html>
