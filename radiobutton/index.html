@@ -1,134 +1,181 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<title>ARIA Radio Group – aria-activedescendant</title>
+		<!DOCTYPE html>
+		<html lang="en">
+		<head>
+		<meta charset="UTF-8">
+		<title>Accessible ARIA Radio Group</title>
 
-<style>
-  [role="radiogroup"] {
-    margin-bottom: 1.5rem;
-    outline: none;
-  }
+		<style>
+		  /* Radiogroup container */
+		  [role="radiogroup"] {
+			margin-bottom: 1.5rem;
+		  }
 
-  .group-heading {
-    margin-bottom: 1rem;
-  }
+		  /* Group heading */
+		  .group-heading {
+			margin-bottom: 1rem;
+		  }
 
-  .radio {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    width: 200px;
-    padding: 6px 8px;
-    margin-bottom: 0.75rem;
-    border-radius: 5px;
-    cursor: pointer;
-  }
+		  /* Radio container */
+		  .radio {
+			display: flex;
+			align-items: center;
+			gap: 10px;
+			width: 200px;
+			padding: 6px 8px;
+			margin-bottom: 0.75rem;
+			cursor: pointer;
+			border-radius: 5px;
+			outline: none;
+		  }
 
-  .radio-ui {
-    width: 18px;
-    height: 16px;
-    border: 2px solid #005a9c;
-    border-radius: 50%;
-    box-sizing: border-box;
-    flex-shrink: 0;
-  }
+		  /* Visual radio circle (decorative only) */
+		  .radio-ui {
+			width: 16px;
+			height: 16px;
+			min-width: 16px;
+			border: 2px solid #005a9c;
+			border-radius: 50%;
+			box-sizing: border-box;
+			flex-shrink: 0;
+		  }
 
-  .radio[aria-checked="true"] .radio-ui {
-    background-color: #005a9c;
-    box-shadow: inset 0 0 0 4px #fff;
-  }
+		  /* Checked state */
+		  .radio[aria-checked="true"] .radio-ui {
+			background-color: #005a9c;
+			box-shadow: inset 0 0 0 4px #ffffff;
+		  }
 
-  .radio.active {
-    outline: 2px solid #005a9c;
-    outline-offset: 2px;
-  }
-</style>
-</head>
+		  /* Focus and hover */
+		  .radio:focus,
+		  .radio:hover {
+			outline: 2px solid #005a9c;
+			outline-offset: 2px;
+			background-color: #ffffff;
+		  }
 
-<body>
+		  /* Label text */
+		  .radio-label {
+			line-height: normal;
+		  }
+		</style>
+		</head>
 
-<div
-  role="radiogroup"
-  aria-labelledby="group_label"
-  tabindex="0"
-  aria-activedescendant="radio-a"
-  id="wcag-group"
->
-  <h1 id="group_label" class="group-heading">
-    WCAG Compliance Level
-  </h1>
+		<body>
 
-  <div id="radio-a" role="radio" aria-checked="true" class="radio active">
-    <span class="radio-ui" aria-hidden="true"></span>
-    WCAG A
-  </div>
+		<div role="radiogroup" aria-labelledby="group_label">
+		  <h1 id="group_label" class="group-heading">
+			WCAG Compliance Level
+		  </h1>
 
-  <div id="radio-aa" role="radio" aria-checked="false" class="radio">
-    <span class="radio-ui" aria-hidden="true"></span>
-    WCAG AA
-  </div>
+		  <div role="radio" aria-checked="true" tabindex="0" class="radio">
+			<span class="radio-ui" aria-hidden="true"></span>
+			<span class="radio-label">WCAG A</span>
+		  </div>
 
-  <div id="radio-aaa" role="radio" aria-checked="false" class="radio">
-    <span class="radio-ui" aria-hidden="true"></span>
-    WCAG AAA
-  </div>
-</div>
+		  <div role="radio" aria-checked="false" tabindex="-1" class="radio">
+			<span class="radio-ui" aria-hidden="true"></span>
+			<span class="radio-label">WCAG AA</span>
+		  </div>
 
-<div>Thanks for learning</div>
+		  <div role="radio" aria-checked="false" tabindex="-1" class="radio">
+			<span class="radio-ui" aria-hidden="true"></span>
+			<span class="radio-label">WCAG AAA</span>
+		  </div>
+		</div>
 
-<script>
+		<p>Thanks for learning</p>
+
+		<script>
 'use strict';
 
-const group = document.getElementById('wcag-group');
-const radios = Array.from(group.querySelectorAll('[role="radio"]'));
+class RadioGroup {
+  constructor(groupNode) {
+    this.groupNode = groupNode;
+    this.radioButtons = Array.from(
+      groupNode.querySelectorAll('[role="radio"]')
+    );
 
-let activeIndex = 0;
+    this.radioButtons.forEach(rb => {
+      rb.addEventListener('keydown', this.onKeyDown.bind(this));
+      rb.addEventListener('click', this.onClick.bind(this));
+    });
 
-function updateActive(index, select = false) {
-  radios.forEach((radio, i) => {
-    radio.classList.toggle('active', i === index);
-    if (select) {
-      radio.setAttribute('aria-checked', i === index ? 'true' : 'false');
+    // Critical: detect when focus leaves the group
+    this.groupNode.addEventListener(
+      'focusout',
+      this.onGroupFocusOut.bind(this)
+    );
+  }
+
+  setChecked(current) {
+    this.radioButtons.forEach(rb => {
+      rb.setAttribute('aria-checked', 'false');
+      rb.tabIndex = -1;
+    });
+
+    current.setAttribute('aria-checked', 'true');
+    current.tabIndex = 0;
+  }
+
+  moveFocus(fromIndex, direction) {
+    const nextIndex =
+      direction === 'next'
+        ? (fromIndex + 1) % this.radioButtons.length
+        : (fromIndex - 1 + this.radioButtons.length) %
+          this.radioButtons.length;
+
+    this.radioButtons[nextIndex].focus();
+  }
+
+  onKeyDown(event) {
+    const index = this.radioButtons.indexOf(event.currentTarget);
+
+    switch (event.key) {
+      case 'ArrowRight':
+      case 'ArrowDown':
+        this.moveFocus(index, 'next');
+        event.preventDefault();
+        break;
+
+      case 'ArrowLeft':
+      case 'ArrowUp':
+        this.moveFocus(index, 'prev');
+        event.preventDefault();
+        break;
+
+      case ' ':
+      case 'Enter':
+        this.setChecked(event.currentTarget);
+        event.preventDefault();
+        break;
     }
-  });
+  }
 
-  group.setAttribute('aria-activedescendant', radios[index].id);
-  activeIndex = index;
+  onClick(event) {
+    this.setChecked(event.currentTarget);
+  }
+
+  onGroupFocusOut(event) {
+    // If focus is moving OUT of the group
+    if (!this.groupNode.contains(event.relatedTarget)) {
+      // Remove focusability from all radios except checked
+      this.radioButtons.forEach(rb => {
+        if (rb.getAttribute('aria-checked') !== 'true') {
+          rb.tabIndex = -1;
+        }
+      });
+    }
+  }
 }
 
-group.addEventListener('keydown', e => {
-  switch (e.key) {
-    case 'ArrowDown':
-    case 'ArrowRight':
-      updateActive((activeIndex + 1) % radios.length);
-      e.preventDefault();
-      break;
-
-    case 'ArrowUp':
-    case 'ArrowLeft':
-      updateActive(
-        (activeIndex - 1 + radios.length) % radios.length
-      );
-      e.preventDefault();
-      break;
-
-    case ' ':
-    case 'Enter':
-      updateActive(activeIndex, true);
-      e.preventDefault();
-      break;
-  }
-});
-
-group.addEventListener('click', e => {
-  const index = radios.indexOf(e.target.closest('[role="radio"]'));
-  if (index !== -1) {
-    updateActive(index, true);
-    group.focus();
-  }
+window.addEventListener('load', () => {
+  document
+    .querySelectorAll('[role="radiogroup"]')
+    .forEach(group => new RadioGroup(group));
 });
 </script>
 
-</body>
-</html>
+
+
+		</body>
+		</html>
